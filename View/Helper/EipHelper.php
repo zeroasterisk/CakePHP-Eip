@@ -74,7 +74,7 @@ class EipHelper extends AppHelper {
 	 *   'element' => 'div', // wrapper container
 	 *   'elementClass' => 'eip-wrap', // wrapper class for container
 	 *   'formHelper' => 'Form', // can set to some other helper eg: TwitterBootstrap
-	 *   'toolTip' => 'Click to Edit',
+	 *   'tooltip' => 'Click to Edit',
 	 *   'loadurl' => null, // Normally content of the form will be same as content of the edited element. However using this parameter you can load form content from external URL.
 	 *   --------- form options can be used from the form helper
 	 *   'rows' => 1,
@@ -99,7 +99,7 @@ class EipHelper extends AppHelper {
 		'element' => 'div', // wrapper container
 		'elementClass' => 'eip-wrap', // wrapper class for container
 		'formHelper' => 'Form', // can set to some other helper eg: TwitterBootstrap
-		'toolTip' => 'Click to Edit', //
+		'tooltip' => 'Click to Edit', //
 		'loadurl' => null, // Normally content of the form will be same as content of the edited element. However using this parameter you can load form content from external URL.
 		// --------- form options can be used from the form helper
 		'rows' => 1,
@@ -206,7 +206,7 @@ class EipHelper extends AppHelper {
 
 		// misc
 		if (!empty($title)) {
-			$toolTip = $title;
+			$tooltip = $title;
 		}
 
 		// generate JS to trigger EIP
@@ -223,7 +223,7 @@ class EipHelper extends AppHelper {
 			$element,
 			$elementId,
 			$elementClass,
-			$title,
+			$tooltip,
 			$display,
 			$element
 		);
