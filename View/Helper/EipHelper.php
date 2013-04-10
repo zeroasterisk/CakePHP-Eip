@@ -79,7 +79,7 @@ class EipHelper extends AppHelper {
 	 *   --------- form options can be used from the form helper
 	 *   'rows' => 1,
 	 *   'cols' => 5,
-	 *   'label' => false, // if set, displays a label
+	 *   'placeholder' => false, // if set, displays a placeholder
 	 *   'type' => 'textarea', // defaults to textarea
 	 *   'cssclass' => 'eip', // any class for input
 	 *   'style' => 'eip', // any style for input
@@ -99,15 +99,15 @@ class EipHelper extends AppHelper {
 		'element' => 'div', // wrapper container
 		'elementClass' => 'eip-wrap', // wrapper class for container
 		'formHelper' => 'Form', // can set to some other helper eg: TwitterBootstrap
-		'tooltip' => 'Click to Edit', //
+		'tooltip' => '', //
 		'loadurl' => null, // Normally content of the form will be same as content of the edited element. However using this parameter you can load form content from external URL.
 		// --------- form options can be used from the form helper
 		'rows' => 1,
 		'cols' => 5,
-		'label' => null, // if set, displays a label
-		'type' => 'textarea', // defaults to textarea
+		'placeholder' => null, // if set, displays a placeholder
+		'type' => 'text', // defaults to text, or could be textarea
 		'cssclass' => 'eip', // any class for input
-		'style' => 'eip', // any style for input
+		'style' => 'position: relative;', // any style for input
 		'value' => null, // if null, will attempt to get from the data
 		// --------- button options
 		'submit' => 'Save', // or false to hide the button
@@ -177,6 +177,10 @@ class EipHelper extends AppHelper {
 			$display = $value;
 		}
 
+		// default the placeholder
+		if ($placeholder == null) {
+			$placeholder = '<em class="muted eip-placeholder">'.Inflector::humanize($fieldName).'</em>';
+		}
 
 		// validate the ID
 		if (empty($id)) {
@@ -212,7 +216,7 @@ class EipHelper extends AppHelper {
 		// generate JS to trigger EIP
 		// http://book.cakephp.org/2.0/en/core-libraries/helpers/html.html#HtmlHelper::scriptBlock
 		$name = "data[$modelName][$fieldName]";
-		$jsOptions = Set::filter(compact('name', 'type', 'cancel', 'submit', 'tooltip',
+		$jsOptions = Set::filter(compact('name', 'type', 'cancel', 'submit', 'tooltip', 'placeholder',
 			'cssclass', 'style', 'rows', 'cols', 'loadurl'));
 		$this->js .= '$("#' . $elementId . '").editable("' . $submitUrl . '", ' . $this->Js->object($jsOptions) . ');';
 
