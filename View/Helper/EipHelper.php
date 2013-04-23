@@ -20,17 +20,25 @@
  * @link https://github.com/kareypowell/CakePHP-InPlace-Editing
  * Author:      Karey H. Powell
  * Author URL:  http://kareypowell.com/*
+ * ----------------------------------------------------------------------------
+ * Huge credit to the fantastic X-editable library:
+ * @link http://vitalets.github.io/x-editable/index.html
+ * @link http://github.com/vitalets/x-editable
+ * Author:      Vitaliy Potapov
+ * Author URL:  https://github.com/vitalets
  *
  * ----------------------------------------------------------------------------
- * @requires jquery or zepto
- * @requires https://github.com/tuupola/jquery_jeditable (may switch js engine)
- * @recommended twitter bootstrap (tooltip handling / styling)
+ * @requires bootstrapjs or jquery or zepto (not included in this repo)
+ *
+ * @requires http://vitalets.github.io/x-editable/ (included in this repo)
+ *
+ *
+ * Setup:
  * ----------------------------------------------------------------------------
+ *   See README
  *
- * Setup in controller:
- * $helpers = array('Eip.Eip' => array('pathToScript' => * '/js/jeditable.custom.js', 'options' => array());
- *
- * Usage:
+ * Usage: (in views)
+ * ----------------------------------------------------------------------------
  * <?php echo $this->Eip->input('Page.title', $page); ?>
  * <?php echo $this->Eip->input('Page.title', $page, 'Main Title of Page'); ?>
  * <?php echo $this->Eip->input('Page.title', $page, array('title' => 'Main Title of Page')); ?>
@@ -43,7 +51,12 @@ class EipHelper extends AppHelper {
 	/**
 	 * Configuration for the Path to the script
 	 */
-	public $pathToScript = '/js/vendors/jquery.jeditable.mini.js';
+	public $pathToJs = '/eip/js/bootstrap-editable.js';
+
+	/**
+	 * Configuration for the Path to the script
+	 */
+	public $pathToCss = '/eip/css/bootstrap-editable.css';
 
 	/**
 	 * placeholder for data which can be set on the helper object
@@ -68,56 +81,95 @@ class EipHelper extends AppHelper {
 	 * default options to be passed into input
 	 * you can overwrite these at runtime
 	 *
-	 *   'submitUrl' => array('action' => 'eip'), // url to be submit to (array or string)
+	 *   'url' => array('action' => 'eip'), // url to be submit to (array or string)
 	 *   'id' => null, // if empty, will attempt to get from the data
-	 *   'display' => null, // if set, overrides the display of the Eip
-	 *   'element' => 'div', // wrapper container
-	 *   'elementClass' => 'eip-wrap', // wrapper class for container
-	 *   'formHelper' => 'Form', // can set to some other helper eg: TwitterBootstrap
-	 *   'tooltip' => 'Click to Edit',
-	 *   'loadurl' => null, // Normally content of the form will be same as content of the edited element. However using this parameter you can load form content from external URL.
-	 *   --------- form options can be used from the form helper
-	 *   'rows' => 1,
-	 *   'cols' => 5,
-	 *   'placeholder' => false, // if set, displays a placeholder
-	 *   'type' => 'textarea', // defaults to textarea
-	 *   'cssclass' => 'eip', // any class for input
-	 *   'style' => 'eip', // any style for input
-	 *   'value' => null, // if null, will attempt to get from the data
-	 *   --------- button options
-	 *   'submit' => 'Save', // or false to hide the button
-	 *   (return should still save if hidden)
-	 *   'cancel' => 'Cancel', // or false to hide the button
-	 *   (esc should still cancel if hidden)
+	 *   'element' => 'span', // wrapper container
+	 *   ...
 	 *
 	 * @access public
 	 */
 	public $options = array(
-		'submitUrl' => array('action' => 'eip'), // url to be submit to (array or string)
-		'id' => null, // if empty, will attempt to get from the data
-		'display' => null, // if set, overrides the display of the Eip
-		'element' => 'div', // wrapper container
-		'elementClass' => 'eip-wrap', // wrapper class for container
-		'formHelper' => 'Form', // can set to some other helper eg: TwitterBootstrap
-		'tooltip' => '', //
-		'loadurl' => null, // Normally content of the form will be same as content of the edited element. However using this parameter you can load form content from external URL.
-		// --------- form options can be used from the form helper
-		'rows' => 1,
-		'cols' => 5,
-		'placeholder' => null, // if set, displays a placeholder
-		'type' => 'text', // defaults to text, or could be textarea
-		'cssclass' => 'eip', // any class for input
-		'style' => 'position: relative;', // any style for input
-		'value' => null, // if null, will attempt to get from the data
-		// --------- button options
-		'submit' => 'Save', // or false to hide the button
-		'cancel' => 'Cancel', // or false to hide the button
-		/*
-		// --------- hackery, these could be set and should work
-		'data' => null,
-		'modelName' => null,
-		'fieldName' => null,
-		 */
+		// -----------------------
+		// options for container on page & data setup
+		// url to be submit to via ajax (array or string)
+		//   (or it can be a custom JS function instead of an ajax url)
+		//   the default will end up being on the current prefix/controller
+		//     with the 'action' of 'eip'
+		'url' => array('action' => 'eip'),
+		// if empty, will attempt to get from the data
+		//   translates to 'pk' option in x-editable
+		'id' => null,
+		// if set, overrides the display of the Eip
+		'display' => null,
+		// wrapper container
+		'element' => 'span',
+		// wrapper class for container
+		'elementClass' => 'eip-wrap',
+		// title/tooltip
+		'title' => null,
+		// rel
+		'rel' => null,
+		// -----------------------
+		// options for input
+		// Type of input. Can be text|textarea|select|date|checklist and more
+		'type' => 'text',
+		'mode' => 'popup', // inline or popup
+		// -----------------------
+		// x-editable options which are passed through "as is" if not null
+		//   for more info: http://vitalets.github.io/x-editable/docs.html
+		'ajaxOptions' => null,
+		'anim' => null,
+		'autotext' => null,
+		'disabled' => null,
+		'emptyclass' => null,
+		'emptytext' => null, // placeholder
+		'name' => null, // taken from id attribute
+		'onblur' => null,
+		'params' => null,
+		'placement' => null,
+		'savenochange' => null,
+		'selector' => null,
+		'send' => null,
+		'showbuttons' => null,
+		'success' => null,
+		'toggle' => null,
+		'validate' => null, // custom clientside validation
+		'value' => null, // Initial value of input. If not set, taken from element's text.
+		// x-editable options for other input types
+		'inputclass' => null,
+		'tpl' => null,
+		// textarea
+		'rows' => null,
+		// select & checklist
+		'source' => null,
+		'prepend' => null, // empty option
+		'sourceCache' => null,
+		'sourceError' => null,
+		'separator' => null, // checklist only
+		// date
+		'format' => null,
+		'viewformat' => null,
+		'datepicker' => null,
+		'clear' => null,
+		// combodate
+		//   <script src="js/moment.min.js"></script>
+		'template' => null,
+		'combodate' => null,
+		// wysihtml5
+		//   Wysihtml5 default options.
+		//   https://github.com/jhollingworth/bootstrap-wysihtml5#options
+		'wysihtml5' => null,
+	);
+
+
+	/**
+	 * some of the options' keys are commonly known as other parameters
+	 * so this is a simple mapping array to translate from alias => real
+	 *
+	 * @access public
+	 */
+	public $optionAliases = array(
+		'placeholder' => 'emptytext',
 	);
 
 	/**
@@ -125,8 +177,18 @@ class EipHelper extends AppHelper {
 	 */
 	public function __construct(View $view, $settings = array()) {
 		parent::__construct($view, $settings);
-		if (!empty($settings['pathToScript'])) {
-			$this->pathToScript = $settings['pathToScript'];
+		// load config file (if exists)
+		Configure::load('eip');
+		$eipConfig = Configure::read('Eip');
+		if (!empty($eipConfig) && is_array($eipConfig)) {
+			// extend settings with config (settings override on conflict)
+			$settings = array_merge(array_diff($eipConfig, array(null)), $settings);
+		}
+		if (!empty($settings['pathToJs'])) {
+			$this->pathToJs = $settings['pathToJs'];
+		}
+		if (!empty($settings['pathToCss'])) {
+			$this->pathToCss = $settings['pathToCss'];
 		}
 		if (!empty($settings['options'])) {
 			$this->options = am($this->options, $settings['options']);
@@ -147,7 +209,13 @@ class EipHelper extends AppHelper {
 		if (!is_array($options)) {
 			$options = array('title' => $options);
 		}
-		extract(am($this->options, $options));
+		$options = array_merge($this->options, $options);
+		foreach ($this->optionAliases as $alias => $real) {
+			if (array_key_exists($alias, $options) && empty($options[$real])) {
+				$options[$real] = $options[$alias];
+			}
+		}
+		extract($options);
 
 		// validate the path
 		if (strpos($path, '.')) {
@@ -177,9 +245,9 @@ class EipHelper extends AppHelper {
 			$display = $value;
 		}
 
-		// default the placeholder
-		if ($placeholder == null) {
-			$placeholder = '<em class="muted eip-placeholder">'.Inflector::humanize($fieldName).'</em>';
+		// default the emptytext (placeholder)
+		if ($emptytext == null) {
+			$emptytext = Inflector::humanize($fieldName);
 		}
 
 		// validate the ID
@@ -190,44 +258,86 @@ class EipHelper extends AppHelper {
 			throw new OutOfBoundsException('EipHelper::input() unable to find id');
 		}
 
-		// validate the submitUrl
-		if (empty($submitUrl)) {
-			throw new OutOfBoundsException('EipHelper::input() unable to find submitUrl');
+		// validate the url
+		if (empty($url)) {
+			throw new OutOfBoundsException('EipHelper::input() unable to find url');
 		}
 
 		// generate an elementId
 		$elementId = $key = String::uuid();
 
 		// generate a secure hash
+		// TODO: secure further by integrating session id into $hash
 		$hash = Security::hash(serialize(compact('key', 'id', 'modelName', 'fieldName')), 'sha1', true);
 
-		// revise the submitUrl
-		$submitUrl = Router::url($submitUrl);
-		if (substr($submitUrl, '-1') !== '/') {
-			$submitUrl .= '/';
-		}
-		$submitUrl .= "hash:{$hash}/key:{$elementId}/id:{$id}/";
-
-		// misc
-		if (!empty($title)) {
-			$tooltip = $title;
+		// revise the url
+		if (is_string($url) && strpos($url, '(') !== false && strpos($url, ')') !== false) {
+			// url is a JS function call, do not touch
+		} else {
+			// url is a URL, pass through Router::url();
+			$url = Router::url($url);
+			// ensure it ends in a slash
+			if (substr($url, '-1') !== '/') {
+				$url .= '/';
+			}
+			// add hash to end of URL
+			$url .= "hash:{$hash}/key:{$elementId}/id:{$id}/";
+			// add unique URL to defeate browser cache
+			$url .= '?u=_'.time();
 		}
 
 		// generate JS to trigger EIP
-		// http://book.cakephp.org/2.0/en/core-libraries/helpers/html.html#HtmlHelper::scriptBlock
-		$name = "data[$modelName][$fieldName]";
-		$jsOptions = Set::filter(compact('name', 'type', 'cancel', 'submit', 'tooltip', 'placeholder',
-			'cssclass', 'style', 'rows', 'cols', 'loadurl'));
-		$this->js .= '$("#' . $elementId . '").editable("' . $submitUrl . '", ' . $this->Js->object($jsOptions) . ');';
+		//   http://book.cakephp.org/2.0/en/core-libraries/helpers/html.html#HtmlHelper::scriptBlock
+		// translate a few customized options
+		//   name is sent as a POST value, so Model.field is the easiest to parse
+		//   not sent as: "data[$modelName][$fieldName]";
+		$name = "$modelName.$fieldName";
+		$pk = $id;
+		// passthrough options
+		//   http://vitalets.github.io/x-editable/docs.html
+		$jsOptions = compact(
+			// customized
+			'pk',
+			'type',
+			'mode',
+			'url',
+			'name',
+			// misc
+			'ajaxOptions',
+			'anim',
+			'autotext',
+			'disabled',
+			'emptyclass',
+			'emptytext',
+			'onblur',
+			'params',
+			'placement',
+			'savenochange',
+			'selector',
+			'send',
+			'showbuttons',
+			'success',
+			'toggle',
+			'validate',
+			'value',
+			// extras for other types
+			'format',
+			'viewformat',
+			'datepicker'
+		);
+		$jsOptions = array_diff($jsOptions, array(null));
+		$this->js .= '$("#' . $elementId . '").editable(' . $this->Js->object($jsOptions) . ');';
 
 		// return URL
 		// note: wrapped with data-* attributes for
 		// http://twitter.github.io/bootstrap/javascript.html#tooltips
-		return sprintf('<%s id="%s" class="%s" data-toggle="tooltip" data-placement="left" title="%s">%s</%s>',
+		return sprintf('<%s href="#eip" id="%s" class="%s" data-pk="%s" data-type="%s" title="%s">%s</%s>',
 			$element,
 			$elementId,
 			$elementClass,
-			$tooltip,
+			$id,
+			(empty($type) ? 'text' : $type),
+			$title,
 			$display,
 			$element
 		);
@@ -236,14 +346,16 @@ class EipHelper extends AppHelper {
 	/**
 	 * use the callback of afterRender to inject all JS
 	 * this triggers AFTER the view, but BEFORE the layout
-	 * so if you need to customize $this->pathToScript, do so in the view
+	 * so if you need to customize $this->pathToJs, do so in the view
 	 * or you can pass in as settings
 	 * via Html->scriptBlock()
 	 */
 	public function afterRender($a=null) {
+		$content = parent::afterRender($a);
 		if (!empty($this->js)) {
-			$this->Html->scriptBlock('$.getScript("' . $this->pathToScript . '", function() { ' . $this->js . '});', array('inline' => false));
+			$content .= $this->Html->css( $this->pathToCss, null, array('inline' => false) );
+			$this->Html->scriptBlock('$.getScript("' . $this->pathToJs . '", function() { ' . $this->js . '});', array('inline' => false));
 		}
-		return parent::afterRender($a);
+		return $content;
 	}
 }

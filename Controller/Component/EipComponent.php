@@ -27,8 +27,12 @@
  * @recommended twitter bootstrap (tooltip handling / styling)
  * ----------------------------------------------------------------------------
  *
- * Usage Controller:
+ * Setup:
+ * ----------------------------------------------------------------------------
+ *   See README
  *
+ * Usage: (in controllers)
+ * ----------------------------------------------------------------------------
  * public $helpers = array('Eip.Eip');
  * public $components = array('Eip.Eip');
  *
@@ -106,12 +110,24 @@ class EipComponent extends Component {
 	 * @return array $data
 	 */
 	public function setupData($modelName = null, $fieldName = null, $defaultData = array()) {
+		// data as reformatted by x-editable
+		if (!empty($this->request->data['name']) && !empty($this->request->data['value'])) {
+			list($_model, $_field) = explode('.', $this->request->data['name']);
+			$this->request->data[$_model][$_field] = $this->request->data['value'];
+			unset($this->request->data['name']);
+			unset($this->request->data['value']);
+			if (!empty($this->request->data['pk'])) {
+				$this->request->data[$_model]['id'] = $this->request->data['pk'];
+				unset($this->request->data['pk']);
+			}
+		}
 		// verify inputs and data
 		if (empty($modelName)) {
 			throw new OutOfBoundsException('eip - missing modelName from $data');
 		}
+		// verify data[model]
 		if (empty($this->request->data[$modelName]) || !is_array($this->request->data[$modelName])) {
-			debug($this->request->data);
+			echo json_encode($this->request->data);
 			throw new OutOfBoundsException('eip - $data[' . $modelName . '] is empty');
 		}
 		if (empty($fieldName)) {

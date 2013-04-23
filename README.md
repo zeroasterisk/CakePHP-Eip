@@ -29,8 +29,49 @@ Install
 
 ```
 git clone https://github.com/zeroasterisk/CakePHP-Eip.git app/Plugin/Eip
-curl 'http://www.appelsiini.net/download/jquery.jeditable.mini.js' > app/webroot/js/jquery.jeditable.mini.js
 ```
+
+Decide on a supported Library.
+
+* Bootstrap
+* jQueryUI
+* jQuery
+
+For more information on these options check out
+(X-editable)[http://vitalets.github.io/x-editable/index.html]
+
+All following examples assume bootstrap is chosen
+(others are included in this package, you just have to move them into place appropriatly)
+
+Setup Library JS/CSS: Method A: symlink
+-----------------
+
+```
+cd app/webroot
+ln -s ../Plugin/Eip/webroot/bootstrap-editable/bootstrap-editable eip
+```
+
+Setup Library JS/CSS: Method B: copy the directory
+-----------------
+
+```
+cd app/webroot
+cp -r ../Plugin/Eip/webroot/bootstrap-editable/bootstrap-editable eip
+```
+
+Setup the Config file (for option defaulting)
+-----------------
+
+A basic config file has been included in the package, just copy it into place
+and edit...
+
+```
+cd app/Config
+cp ../Plugin/Eip/Config/eip.php ./
+```
+
+Configure
+-----------------
 
 Add the following to `app/Config/bootstrap.php`
 
@@ -38,18 +79,41 @@ Add the following to `app/Config/bootstrap.php`
 CakePlugin::load('Eip');
 ```
 
+Configure: Edit app/Config/eip.php
+-----------------
+
+The `app/Config/eip.php` file is the easiest way to configure Eip.
+
+It allows you to setup sitewide configurations for Eip, but you can still
+override these configuration on a per-controller basis by passing in settings
+when initializing the helper.
+
+Also, the config file is only loaded when the helper is iniitalized, so there's
+no extra applicaiton latency on controllers which don't load the helper.
+
+Configure: Pass in settings when loading the helpers
+-----------------
+
+```
+Class SomethingController extends AppController {
+	public $helpers = array(
+		'Eip.Eip' => array(
+			'pathToJs' => '...',
+			'pathToJs' => '...',
+			'options' => array(...)
+		),
+	)
+}
+```
+
+
 Usage
 -----------------
 
 *Controller*
 
 ```
-public $helpers = array('Eip.Eip' => array(
-	// path where you downloaded jeditable.js
-	'pathToScript' => '/js/jquery.jeditable.mini.js',
-	// default options for Eip->input()
-	'options' => array(),
-);
+public $helpers = array('Eip.Eip');
 
 public $components = array('Eip.Eip');
 
@@ -94,42 +158,92 @@ In the view where you want the Edit in Place text to show (index, view, etc)
 // might already be there (non-inlined JS from HtmlHelper)
 // http://book.cakephp.org/2.0/en/core-libraries/helpers/html.html#HtmlHelper::scriptBlock
 echo $this->fetch('script');
-?>
-
-
 ```
 
-Options you can pass into Eip Helper
+Options
 -----------------
 
+For more details on options see
+(X-editable)[http://vitalets.github.io/x-editable/docs.html#editable]
+
+You may set these options anywhere you like. Here's the load order (later overwrites)
+
+* in the config file,
+* or in the `$helper` variable options, in the controller
+* or in the `$this->Eip->input($path, $data, $options);` parameter, in the view
+
 ```
-public $options = array(
-	'submitUrl' => array('action' => 'eip'), // url to be submit to (array or string)
-	'id' => null, // if empty, will attempt to get from the data
-	'display' => null, // if set, overrides the display of the Eip
-	'element' => 'div', // wrapper container
-	'elementClass' => 'eip-wrap', // wrapper class for container
-	'formHelper' => 'Form', // can set to some other helper eg: TwitterBootstrap
-	'toolTip' => 'Click to Edit', //
-	'loadurl' => null, // Normally content of the form will be same as content of the edited element. However using this parameter you can load form content from external URL.
-	// --------- form options can be used from the form helper
-	'rows' => 1,
-	'cols' => 5,
-	'label' => null, // if set, displays a label
-	'type' => 'textarea', // defaults to textarea
-	'cssclass' => 'eip', // any class for input
-	'style' => 'eip', // any style for input
-	'value' => null, // if null, will attempt to get from the data
-	// --------- button options
-	'submit' => 'Save', // or false to hide the button
-	'cancel' => 'Cancel', // or false to hide the button
-	/*
-	// --------- hackery, these could be set and should work
-	'data' => null,
-	'modelName' => null,
-	'fieldName' => null,
-	*/
+$options = array(
+	// -----------------------
+	// options for container on page & data setup
+	// url to be submit to via ajax (array or string)
+	//   (or it can be a custom JS function instead of an ajax url)
+	//   the default will end up being on the current prefix/controller
+	//     with the 'action' of 'eip'
+	'url' => array('action' => 'eip'),
+	// if empty, will attempt to get from the data
+	//   translates to 'pk' option in x-editable
+	'id' => null,
+	// if set, overrides the display of the Eip
+	'display' => null,
+	// wrapper container
+	'element' => 'span',
+	// wrapper class for container
+	'elementClass' => 'eip-wrap',
+	// title/tooltip
+	'title' => null,
+	// rel
+	'rel' => null,
+	// -----------------------
+	// options for input
+	// Type of input. Can be text|textarea|select|date|checklist and more
+	'type' => 'text',
+	'mode' => 'popup', // inline or popup
+	// -----------------------
+	// x-editable options which are passed through "as is" if not null
+	//   for more info: http://vitalets.github.io/x-editable/docs.html
+	'ajaxOptions' => null,
+	'anim' => null,
+	'autotext' => null,
+	'disabled' => null,
+	'emptyclass' => null,
+	'emptytext' => null, // placeholder
+	'name' => null, // taken from id attribute
+	'onblur' => null,
+	'params' => null,
+	'placement' => null,
+	'savenochange' => null,
+	'selector' => null,
+	'send' => null,
+	'showbuttons' => null,
+	'success' => null,
+	'toggle' => null,
+	'validate' => null, // custom clientside validation
+	'value' => null, // Initial value of input. If not set, taken from element's text.
+	// x-editable options for other input types
+	'inputclass' => null,
+	'tpl' => null,
+	// textarea
+	'rows' => null,
+	// select & checklist
+	'source' => null,
+	'prepend' => null, // empty option
+	'sourceCache' => null,
+	'sourceError' => null,
+	'separator' => null, // checklist only
+	// date
+	'format' => null,
+	'viewformat' => null,
+	'datepicker' => null,
+	'clear' => null,
+	// combodate
+	//   <script src="js/moment.min.js"></script>
+	'template' => null,
+	'combodate' => null,
+	// wysihtml5
+	//   Wysihtml5 default options.
+	//   https://github.com/jhollingworth/bootstrap-wysihtml5#options
+	'wysihtml5' => null,
 );
 ```
 
-(NOTE: you can set these options when loading the helper too)
