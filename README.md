@@ -6,7 +6,7 @@ This is a helper to simplify Edit in Place functionality in CakePHP views
 Validation is done in the Model, optionally also in the View (currently little
 )
 
-(Demo Screencast)[http://screencast.com/t/gwCPpjqIPg] (2:21)
+[Demo Screencast](http://screencast.com/t/gwCPpjqIPg) (2:21)
 
 * https://github.com/zeroasterisk/CakePHP-Eip
 * Author:      Alan Blount
