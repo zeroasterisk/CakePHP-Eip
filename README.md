@@ -17,12 +17,18 @@ Inspiration from:
 * Copyright (c) 2012 Karey H. Powell
 * Licensed under The MIT License
 
+Huge credit to the fantastic X-editable library:
+
+* http://vitalets.github.io/x-editable/index.html
+* http://github.com/vitalets/x-editable
+* Author:      Vitaliy Potapov
+* Author URL:  https://github.com/vitalets
+
 Requirements
 -----------------
 
-* requires jquery or zepto
-* requires https://github.com/tuupola/jquery_jeditable (may switch js engine)
-* recommended twitter bootstrap (tooltip handling / styling)
+* @requires bootstrapjs or jquery or zepto (not included in this repo)
+* @requires http://vitalets.github.io/x-editable/ (included in this repo)
 
 Install
 -----------------
