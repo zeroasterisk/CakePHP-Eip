@@ -50,6 +50,34 @@
  * }
  *
  */
+
+
+/**
+ * Data is validated by the model
+ * if Eip expectations fail or the model invalidates the data on save
+ * we throw a EipDataException error, which shows up in the interface
+ * and sets the HTTP status to something other than a 200
+ *
+ * You may create your own EipDataException class before this component initializes
+ */
+if (!class_exists('EipDataException')) {
+	class EipDataException extends CakeException {
+		protected $_messageTemplate = '%s %s';
+		public function __construct($message, $data=null, $debugOnly=null) {
+			header("HTTP/1.0 417 Expectation Failed");
+			if (!empty($data)) {
+				$data = preg_replace('#[^a-zA-Z0-9 \-\_:]+#', ' ', json_encode($data));
+				$data = "($data)";
+			}
+			echo sprintf($this->_messageTemplate, $message, $data);
+			if (Configure::read('debug') > 2) {
+				echo json_encode($debugOnly);
+			}
+			exit;
+		}
+	}
+}
+
 class EipComponent extends Component {
 
 	/**
@@ -111,7 +139,7 @@ class EipComponent extends Component {
 	 */
 	public function setupData($modelName = null, $fieldName = null, $defaultData = array()) {
 		// data as reformatted by x-editable
-		if (!empty($this->request->data['name']) && !empty($this->request->data['value'])) {
+		if (!empty($this->request->data['name']) && isset($this->request->data['value'])) {
 			list($_model, $_field) = explode('.', $this->request->data['name']);
 			$this->request->data[$_model][$_field] = $this->request->data['value'];
 			unset($this->request->data['name']);
@@ -123,26 +151,25 @@ class EipComponent extends Component {
 		}
 		// verify inputs and data
 		if (empty($modelName)) {
-			throw new OutOfBoundsException('eip - missing modelName from $data');
+			throw new EipDataException('not saved', 'missing modelName from $data', compact('modelName', 'fieldName', 'defaultData'));
 		}
 		// verify data[model]
 		if (empty($this->request->data[$modelName]) || !is_array($this->request->data[$modelName])) {
-			echo json_encode($this->request->data);
-			throw new OutOfBoundsException('eip - $data[' . $modelName . '] is empty');
+			throw new EipDataException('not saved', '$data[' . $modelName . '] is empty', $this->request->data);
 		}
 		if (empty($fieldName)) {
 			$fieldName = key($this->request->data[$modelName]);
 		}
 		if (empty($fieldName)) {
-			throw new OutOfBoundsException('eip - missing fieldName from $data');
+			throw new EipDataException('not saved', 'missing ' . $fieldName . ' from $data', $this->request->data);
 		}
 		extract($this->passedArgs);
 		if (empty($id) || empty($key) || empty($hash)) {
-			throw new OutOfBoundsException('eip - missing required passedArgs from URL');
+			throw new EipDataException('not saved', 'Security: missing required passedArgs from URL', compact('id', 'key', 'hash'));
 		}
 		$hashShouldBe = Security::hash(serialize(compact('key', 'id', 'modelName', 'fieldName')), 'sha1', true);
 		if ($hash !== $hashShouldBe) {
-			throw new OutOfBoundsException('eip - security check failure');
+			throw new EipDataException('not saved', 'Security: check failure', compact('hashShouldBe', 'hash'));
 		}
 		// setup on model for easy access in other methods
 		$this->modelName = $modelName;
@@ -169,16 +196,17 @@ class EipComponent extends Component {
 			$modelName = $this->modelName;
 		}
 		if (empty($modelName)) {
-			throw new OutOfBoundsException('eip::save() - missing modelName');
+			throw new EipDataException('not saved', 'missing modelName [component::save()]', compact('modelName', 'data'));
 		}
 		if (empty($data)) {
-			throw new OutOfBoundsException('eip::save() - missing data to save');
+			throw new EipDataException('not saved', 'missing data to save [component::save()]', compact('modelName', 'data'));
 		}
 		$Model = ClassRegistry::init($modelName);
 		$Model->create(false);
 		$saved = $Model->save($data);
 		if (!$saved) {
-			throw new OutOfBoundsException('eip::save() - unable to save ' . implode('<br>', $this->$modelName->validationErrors));
+			// if we didn't save, here's where we throw back validationErrors
+			throw new EipDataException('not saved', $Model->validationErrors, $data);
 		}
 		return $saved;
 	}
@@ -196,13 +224,13 @@ class EipComponent extends Component {
 			$modelName = $this->modelName;
 		}
 		if (empty($modelName)) {
-			throw new OutOfBoundsException('eip::respondLazy() - missing modelName');
+			throw new EipDataException('eip::respondLazy()', 'missing modelName');
 		}
 		if (empty($fieldName)) {
 			$fieldName = $this->fieldName;
 		}
 		if (empty($fieldName)) {
-			throw new OutOfBoundsException('eip::respondLazy() - missing fieldName');
+			throw new EipDataException('eip::respondLazy()', 'missing fieldName');
 		}
 		if (!empty($data[$modelName][$fieldName])) {
 			echo $data[$modelName][$fieldName];

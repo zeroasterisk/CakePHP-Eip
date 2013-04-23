@@ -3,6 +3,11 @@ Eip: Edit in Place for CakePHP
 
 This is a helper to simplify Edit in Place functionality in CakePHP views
 
+Validation is done in the Model, optionally also in the View (currently little
+)
+
+(Demo Screencast)[http://screencast.com/t/gwCPpjqIPg] (2:21)
+
 * https://github.com/zeroasterisk/CakePHP-Eip
 * Author:      Alan Blount
 * Author URL:  http://zeroasterisk.com/
@@ -252,4 +257,31 @@ $options = array(
 	'wysihtml5' => null,
 );
 ```
+
+Exceptions
+----------------
+
+Want to customize the feedback for error / exception handling?
+
+No Problem... just create the EipDataException class somewhere before the
+EipComponent is initialized into the controller, and your Exception handler
+takes over rendering.
+
+Note: it must return a non-200 Http Status code...
+
+	class EipDataException extends CakeException {
+		protected $_messageTemplate = '%s %s';
+		public function __construct($message, $data=null, $debugOnly=null) {
+			header("HTTP/1.0 417 Expectation Failed");
+			if (!empty($data)) {
+				$data = preg_replace('#[^a-zA-Z0-9 \-\_:]+#', ' ', json_encode($data));
+				$data = "($data)";
+			}
+			echo sprintf($this->_messageTemplate, $message, $data);
+			if (Configure::read('debug') > 2) {
+				echo json_encode($debugOnly);
+			}
+			exit;
+		}
+	}
 
