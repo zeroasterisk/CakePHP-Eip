@@ -182,7 +182,7 @@ class EipHelper extends AppHelper {
 		$eipConfig = Configure::read('Eip');
 		if (!empty($eipConfig) && is_array($eipConfig)) {
 			// extend settings with config (settings override on conflict)
-			$settings = array_merge(array_diff($eipConfig, array(null)), $settings);
+			$settings = Set::merge(Set::diff($eipConfig, array(null)), $settings);
 		}
 		if (!empty($settings['pathToJs'])) {
 			$this->pathToJs = $settings['pathToJs'];
