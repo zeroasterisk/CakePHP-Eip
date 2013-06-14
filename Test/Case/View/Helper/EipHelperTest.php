@@ -1,6 +1,5 @@
 <?php
 App::uses('View', 'View');
-App::uses('Helper', 'View');
 App::uses('EipHelper', 'Eip.View/Helper');
 
 /**
@@ -58,36 +57,11 @@ class EipHelperTest extends CakeTestCase {
 	/**
 	 * testInput bad inputs
 	 *
+	 * @expectedException OutOfBoundsException
 	 * @return void
 	 */
 	public function testInputBad() {
-		/*
-		$result = $this->Eip->input();
-		try {
-			$result = $this->Eip->input();
-			$this->fail('No exception');
-		} catch (OutOfBoundsException $e) {
-			$this->pass('Correct exception thrown');
-		}
-		try {
-			$result = $this->Eip->input('FieldOnly');
-			$this->fail('No exception');
-		} catch (OutOfBoundsException $e) {
-			$this->pass('Correct exception thrown');
-		}
-		try {
-			$result = $this->Eip->input('ModelOnly');
-			$this->fail('No exception');
-		} catch (OutOfBoundsException $e) {
-			$this->pass('Correct exception thrown');
-		}
-		try {
-			$result = $this->Eip->input('MissingDot');
-			$this->fail('No exception');
-		} catch (OutOfBoundsException $e) {
-			$this->pass('Correct exception thrown');
-		}
-		 */
+		$result = $this->Eip->input('FieldOnly');
 	}
 
 	/**
@@ -97,23 +71,23 @@ class EipHelperTest extends CakeTestCase {
 	 */
 	public function testInputGood() {
 		$result = $this->Eip->input('User.email', $this->user);
-		$pattern = '#<div id="[a-f0-9\-]{36}" class="eip-wrap" data-toggle="tooltip" data-placement="left" title="">user1@example.com</div>#';
-		$this->assertEquals(1, preg_match($pattern, $result));
+		$pattern = '#<span href="\#eip" id="eip\_[a-f0-9\-]{36}" class="eip-wrap" data-pk="user-1" data-type="text" title="">user1@example.com</span>#';
+		$this->assertPattern($pattern, $result);
 		$result = $this->Eip->input('Profile.zip', $this->user);
-		$pattern = '#<div id="[a-f0-9\-]{36}" class="eip-wrap" data-toggle="tooltip" data-placement="left" title="">40202</div>#';
-		$this->assertEquals(1, preg_match($pattern, $result));
+
+		$pattern = '#<span href="\#eip" id="eip\_[a-f0-9\-]{36}" class="eip-wrap" data-pk="profile-1" data-type="text" title="">40202</span>#';
+		$this->assertPattern($pattern, $result);
 
 		// this wont work, we aren't smart enough for this path :(
 		//$result = $this->Eip->input('Category.0.name', $this->user);
 		// but this would:
 		$result = $this->Eip->input('Category.name', array('Category' => $this->user['Category'][0]));
-		$pattern = '#<div id="[a-f0-9\-]{36}" class="eip-wrap" data-toggle="tooltip" data-placement="left" title="">cat one</div>#';
-		$this->assertEquals(1, preg_match($pattern, $result));
+		$pattern = '#<span href="\#eip" id="eip\_[a-f0-9\-]{36}" class="eip-wrap" data-pk="cat1" data-type="text" title="">cat one</span>#';
+		$this->assertPattern($pattern, $result);
 		$result = $this->Eip->input('Category.name', array('Category' => $this->user['Category'][1]));
-		$pattern = '#<div id="[a-f0-9\-]{36}" class="eip-wrap" data-toggle="tooltip" data-placement="left" title="">cat two</div>#';
-		$this->assertEquals(1, preg_match($pattern, $result));
+		$pattern = '#<span href="\#eip" id="eip\_[a-f0-9\-]{36}" class="eip-wrap" data-pk="cat2" data-type="text" title="">cat two</span>#';
+		$this->assertPattern($pattern, $result);
 		// TODO: stub out the Html helper and verify JS
 	}
-
 
 }
