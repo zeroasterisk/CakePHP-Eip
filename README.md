@@ -81,6 +81,14 @@ cd app/Config
 cp ../Plugin/Eip/Config/eip.php ./
 ```
 
+If you already have a config file that is being loaded, you can also use that one
+
+```
+$config['Eip'] = array(
+	...
+);
+```
+
 Configure
 -----------------
 
