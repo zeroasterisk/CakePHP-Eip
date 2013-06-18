@@ -50,7 +50,7 @@
  * }
  *
  */
-
+App::uses('Component', 'Controller');
 
 /**
  * Data is validated by the model
@@ -62,8 +62,10 @@
  */
 if (!class_exists('EipDataException')) {
 	class EipDataException extends CakeException {
+
 		protected $_messageTemplate = '%s %s';
-		public function __construct($message, $data=null, $debugOnly=null) {
+
+		public function __construct($message, $data = null, $debugOnly = null) {
 			header("HTTP/1.0 417 Expectation Failed");
 			if (!empty($data)) {
 				$data = preg_replace('#[^a-zA-Z0-9 \-\_:]+#', ' ', json_encode($data));
@@ -109,6 +111,7 @@ class EipComponent extends Component {
 	public function initialize(Controller $controller) {
 		$this->request = $controller->request;
 		$this->passedArgs = $controller->passedArgs;
+		$this->controller = $controller;
 	}
 
 	/**
@@ -121,6 +124,9 @@ class EipComponent extends Component {
 	 * @return void
 	 */
 	public function auto($modelName = null, $fieldName = null, $defaultData = array()) {
+		if ($modelName === null) {
+			$modelName = $this->controller->{$this->controller->modelClass}->alias;
+		}
 		$data = $this->setupData($modelName, $fieldName, $defaultData);
 		$saved = $this->save($data, $modelName);
 		return $this->respondLazy($saved, $modelName, $fieldName);
@@ -154,7 +160,7 @@ class EipComponent extends Component {
 			throw new EipDataException('not saved', 'missing modelName from $data', compact('modelName', 'fieldName', 'defaultData'));
 		}
 		// verify data[model]
-		if (empty($this->request->data[$modelName]) || !is_array($this->request->data[$modelName])) {
+		if (empty($this->request->data[$modelName])) {
 			throw new EipDataException('not saved', '$data[' . $modelName . '] is empty', $this->request->data);
 		}
 		if (empty($fieldName)) {
@@ -179,7 +185,7 @@ class EipComponent extends Component {
 		if (!empty($defaultData)) {
 			$data = Set::merge($defaultData, $data);
 		}
-		$data[$modelName] = am($data[$modelName], compact('id'));
+		$data[$modelName] = array_merge($data[$modelName], compact('id'));
 		return $data;
 	}
 
@@ -232,11 +238,10 @@ class EipComponent extends Component {
 		if (empty($fieldName)) {
 			throw new EipDataException('eip::respondLazy()', 'missing fieldName');
 		}
+		$this->controller->response->autoRender = false;
 		if (!empty($data[$modelName][$fieldName])) {
-			echo $data[$modelName][$fieldName];
+			$this->controller->response->body($data[$modelName][$fieldName]);
 		}
-		// this breaks MVC, but you wont need a view... lazy!
-		exit;
 	}
 
 }

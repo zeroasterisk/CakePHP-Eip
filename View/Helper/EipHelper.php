@@ -44,6 +44,8 @@
  * <?php echo $this->Eip->input('Page.title', $page, array('title' => 'Main Title of Page')); ?>
  *
  */
+App::uses('AppHelper', 'View/Helper');
+
 class EipHelper extends AppHelper {
 
 	public $helpers = array('Html', 'Js');
@@ -111,7 +113,7 @@ class EipHelper extends AppHelper {
 		'rel' => null,
 		// -----------------------
 		// options for input
-		// Type of input. Can be text|textarea|select|date|checklist and more
+		// Type of input. Can be text|textarea|select|date|checkbox and more
 		'type' => 'text',
 		'mode' => 'popup', // inline or popup
 		// -----------------------
@@ -140,12 +142,12 @@ class EipHelper extends AppHelper {
 		'tpl' => null,
 		// textarea
 		'rows' => null,
-		// select & checklist
+		// select & checkbox
 		'source' => null,
 		'prepend' => null, // empty option
 		'sourceCache' => null,
 		'sourceError' => null,
-		'separator' => null, // checklist only
+		'separator' => null, // checkbox only
 		// date
 		'format' => null,
 		'viewformat' => null,
@@ -159,6 +161,8 @@ class EipHelper extends AppHelper {
 		//   Wysihtml5 default options.
 		//   https://github.com/jhollingworth/bootstrap-wysihtml5#options
 		'wysihtml5' => null,
+		// only for directl helper settings
+		'autoLoadConfig' => false
 	);
 
 
@@ -177,10 +181,12 @@ class EipHelper extends AppHelper {
 	 */
 	public function __construct(View $view, $settings = array()) {
 		parent::__construct($view, $settings);
-		// load config file (if exists)
-		Configure::load('eip');
-		$eipConfig = Configure::read('Eip');
-		if (!empty($eipConfig) && is_array($eipConfig)) {
+		// auto load config file (if exists)
+		if (!empty($settings['autoLoadConfig']) || file_exists(APP . 'Config' . DS . 'eip.php')) {
+			Configure::load('eip');
+		}
+		$eipConfig = (array)Configure::read('Eip');
+		if (!empty($eipConfig)) {
 			// extend settings with config (settings override on conflict)
 			$settings = Set::merge(Set::diff($eipConfig, array(null)), $settings);
 		}
@@ -191,7 +197,7 @@ class EipHelper extends AppHelper {
 			$this->pathToCss = $settings['pathToCss'];
 		}
 		if (!empty($settings['options'])) {
-			$this->options = am($this->options, $settings['options']);
+			$this->options = array_merge($this->options, $settings['options']);
 		}
 	}
 
@@ -202,9 +208,9 @@ class EipHelper extends AppHelper {
 	 * @param string $path Model.field
 	 * @param array $data array(Model => array(field => value))
 	 * @param array @options
-	 *
+	 * @return string Input form element
 	 */
-	public function input($path=null, $data=null, $options=null) {
+	public function input($path, $data = array(), $options = array()) {
 		// set options
 		if (!is_array($options)) {
 			$options = array('title' => $options);
@@ -236,9 +242,11 @@ class EipHelper extends AppHelper {
 		}
 
 		// default the value
-		if ($value == null) {
+		if ($value === null) {
 			$value = (isset($data[$modelName][$fieldName]) ? $data[$modelName][$fieldName] : '');
 		}
+
+		//$value = 'eee';
 
 		// default the display
 		if (empty($display)) {
@@ -246,7 +254,7 @@ class EipHelper extends AppHelper {
 		}
 
 		// default the emptytext (placeholder)
-		if ($emptytext == null) {
+		if ($emptytext === null) {
 			$emptytext = Inflector::humanize($fieldName);
 		}
 
@@ -264,7 +272,7 @@ class EipHelper extends AppHelper {
 		}
 
 		// generate an elementId
-		$elementId = $key = String::uuid();
+		$elementId = $key = 'eip_' . String::uuid();
 
 		// generate a secure hash
 		// TODO: secure further by integrating session id into $hash
@@ -350,12 +358,14 @@ class EipHelper extends AppHelper {
 	 * or you can pass in as settings
 	 * via Html->scriptBlock()
 	 */
-	public function afterRender($a=null) {
-		$content = parent::afterRender($a);
+	public function afterRender($viewFile = null) {
+		$content = parent::afterRender($viewFile);
 		if (!empty($this->js)) {
 			$content .= $this->Html->css( $this->pathToCss, null, array('inline' => false) );
+			//$content .= $this->Html->script( $this->pathToJs, array('inline' => false) );
 			$this->Html->scriptBlock('$.getScript("' . $this->pathToJs . '", function() { ' . $this->js . '});', array('inline' => false));
 		}
 		return $content;
 	}
+
 }
