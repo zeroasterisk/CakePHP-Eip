@@ -245,6 +245,15 @@ class EipHelper extends AppHelper {
 		if ($value === null) {
 			$value = (isset($data[$modelName][$fieldName]) ? $data[$modelName][$fieldName] : '');
 		}
+		// force value as boolean
+		if (!empty($valueMustBeBooleean)) {
+			$value = (!empty($value));
+			$value = intval($value);
+		}
+		// force value as int
+		if (!empty($valueMustInt)) {
+			$value = intval($value);
+		}
 
 		//$value = 'eee';
 
@@ -331,9 +340,19 @@ class EipHelper extends AppHelper {
 			// extras for other types
 			'format',
 			'viewformat',
-			'datepicker'
+			'datepicker',
+			// data source for select / checklist
+			'source',
+			'sourceCache',
+			'sourceError'
 		);
-		$jsOptions = array_diff($jsOptions, array(null));
+		//$jsOptions = Set::filter($jsOptions);
+		foreach (array_keys($jsOptions) as $k) {
+			if ($jsOptions[$k] === null) {
+				unset($jsOptions[$k]);
+			}
+		}
+
 		$this->js .= '$("#' . $elementId . '").editable(' . $this->Js->object($jsOptions) . ');';
 
 		// return URL
@@ -349,6 +368,35 @@ class EipHelper extends AppHelper {
 			$display,
 			$element
 		);
+	}
+
+	/**
+	 * Create an Edit In Place element for bool inputs (shorcut helper for select based on true/false)
+	 *
+	 * @param string $path Model.field
+	 * @param array $data array(Model => array(field => value))
+	 * @param array @options
+	 *
+	 */
+	public function inputBool($path=null, $data=null, $trueText='True', $falseText=null, $options=array()) {
+		if (empty($falseText)) {
+			$falseText = 'Not ' . $trueText;
+		}
+		$defaults = array(
+			'type' => 'select',
+			'emptytext' => $falseText,
+			'emptyclass' => 'fine',
+			'autotext' => 'always',
+			'valueMustBeBooleean' => true,
+		);
+		$source = array(
+			array('value' => 1, 'text' => $trueText),
+			array('value' => 0, 'text' => $falseText),
+		);
+		$defaults['source'] = $source;
+		$options = array_merge($defaults, $options);
+		return $this->input($path, $data, $options);
+
 	}
 
 	/**
